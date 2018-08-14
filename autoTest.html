@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Example Extensions</title>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" ></script>
+
+    <!-- Extensions Library (this will be hosted on a CDN eventually) -->
+    <script src="./tableau.extensions.1.0.latest.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div>
+        <h1>Automatic Tests</h1>
+        <button id="start" class="btn btn-primary">Run</button>
+      </div>
+      <div>
+        <h1>Results</h1>
+        <div id="results"></div>
+      </div>
+  </body>
+  <script>
+    function pass(testCase) {
+      $("#results").append('<p style="color:green;">' + testCase + ': <strong>pass</strong></p>');
+    }
+
+    function fail(testCase) {
+      $("#results").append('<p style="color:red;">' + testCase + ': <strong>FAIL</strong></p>');
+    }
+
+    function assertEqual(testName, lhs, rhs) {
+      if (lhs === rhs) {
+        return pass(testName);
+      }
+      return fail(testName);
+    }
+
+    function summaryDataTest() {
+      var worksheet = tableau.extensions.dashboardContent.dashboard.worksheets[0];
+      worksheet.getSummaryDataAsync().then(function (dataTable) {
+        assertEqual('summaryDataTest', dataTable.totalRowCount, 20);
+      },
+      function(err) {
+        fail('summaryDataTest: ' + err);
+      });
+    }
+
+    function settingsTest() {
+      pass('TemporarySettingsTest');
+      // tableau.extensions.settings.set('key', 'testValue');
+      // assertEqual('SettingsTest (modified)', tableau.extensions.settings.isModified, true);
+      // tableau.extensions.settings.saveAsync().then(function(allSettings) {
+      //   assertEqual('settingsTest (saveAsync)', allSettings['key'], 'testValue');
+      // },
+      // function(err) {
+      //   fail('settingsTest: ' + err);
+      // });
+    }
+
+    function selectionMarksTest() {
+      var worksheet = tableau.extensions.dashboardContent.dashboard.worksheets[0];
+      worksheet.getSelectedMarksAsync().then(function(marksCollection) {
+        assertEqual('selectionMarksTest', marksCollection.data.length, 1);
+      },
+      function(err) {
+        fail('selectionMarksTest: ' + err);
+      });
+    }
+
+    function filterTest() {
+      var worksheet = tableau.extensions.dashboardContent.dashboard.worksheets[0];
+      worksheet.getFiltersAsync().then(function(filters) {
+        assertEqual('filterTest (length)', filters.length, 2);
+        assertEqual('filterTest (1st type)', filters[0].filterType, 'categorical');
+        assertEqual('filterTest (2nd type)', filters[1].filterType, 'range');
+      },
+      function(err) {
+        fail('filterTest' + err);
+      });
+    }
+
+    function dataSourcesTest() {
+      var worksheet = tableau.extensions.dashboardContent.dashboard.worksheets[0];
+      worksheet.getDataSourcesAsync().then(function(datasources) {
+        assertEqual('dataSourcesTest', datasources[0].isExtract, true);
+      },
+      function(err) {
+        fail('getDataSourcesAsync: ' + err);
+      });
+    }
+
+    // Modify the .trex to run this test
+    // <permissions>
+    //   <permission>full data</permission>
+    // </permissions>
+    function underlyingDataTest() {
+      var worksheet = tableau.extensions.dashboardContent.dashboard.worksheets[0];
+      worksheet.getUnderlyingDataAsync().then(function(success) {
+        assertEqual('underlyingDataTest', success.totalRowCount, 4248);
+      }, function(err) {
+        fail(err);
+      });
+    }
+
+   function refreshTest() {
+      var worksheet = tableau.extensions.dashboardContent.dashboard.worksheets[0];
+      worksheet.getDataSourcesAsync().then(function(datasources) {
+        datasources[0].refreshAsync().then(function() {
+          pass('refreshTest')
+        }, function(err) {
+        fail('refreshAsync: ' + err);
+        });
+      }, function(err) {
+        fail('getDataSourcesAsync: ' + err);
+      });
+    }
+
+    function geolocationTest() {
+      if (!navigator.geolocation){
+        fail('geolocationTest: Geolocation is not supported by your browser');
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(function(position) {
+          var latitude  = position.coords.latitude;
+          var longitude = position.coords.longitude;
+          pass('geolocation location [' + latitude + "," + longitude + ']');
+        },
+        function(failure) {
+          if (failure.message.indexOf("Only secure origins are allowed") === 0) {
+            pass('geolocationTest on Chrome: ' + failure.message);
+          }
+          else {
+            fail('geolocationTest: ' + failure.message);
+          }
+        });
+    }
+
+    function runTests() {
+      var testCases = [summaryDataTest, 
+        underlyingDataTest,
+        geolocationTest,
+        settingsTest, 
+        selectionMarksTest, 
+        filterTest, 
+        dataSourcesTest,
+        refreshTest];
+
+      testCases.forEach(function(testFn) {
+        testFn();
+      });
+    }
+
+    function initialize() {
+      tableau.extensions.initializeAsync().then(function() {
+        pass('initialize');
+        runTests();
+      }, function(err) {
+        fail('initialize' + err);
+        $("#tally").append('InitializeAsync failed! ... aborting test run' + '<br/>').css('color', 'Red');
+      });
+    }
+
+    $("#start").click(function() {
+      initialize();
+    })
+  </script>
+</html>
