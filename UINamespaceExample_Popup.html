@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>UI - Popup</title>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" ></script>
+
+    <!-- Extensions Library (this will be hosted on a CDN eventually) -->
+    <script src="./tableau.extensions.1.0.latest.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <div>
+        <h1>Dialog</h1>
+        <input id="input1" type="text" class="form-control" placeholder="Setting Key">
+        <input id="input2" type="text" class="form-control" placeholder="Setting Value">
+        <button id="save" class="btn btn-primary">Save</button>
+        <button id="close" class="btn btn-primary">Close</button>
+      </div>
+      <button id="init" class="btn btn-primary">Init</button>
+    </div>
+  </body>
+  <script>
+    function init() {
+      tableau.extensions.initializeDialogAsync().then(function(initialPayload) {
+        alert("yay, initialize success");
+        console.log("InitialPayload: " + initialPayload);
+        console.log("DashboardName: " + tableau.extensions.dashboardContent.dashboard.name);
+        $('#close').click(function() {
+          tableau.extensions.ui.closeDialog("testPayload");
+        });
+        $('#save').click(function() {
+          var settingKey = $('#input1').val();
+          var settingValue = $('#input2').val();
+          tableau.extensions.settings.set(settingKey, settingValue);
+          tableau.extensions.settings.saveAsync()
+        });
+      });
+    };
+    $('#init').click(init);
+  </script>
+</html>
