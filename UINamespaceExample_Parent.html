@@ -37,7 +37,7 @@
       });
     }
 
-    var popupUrl = 'https://jz-huang.github.io/examples/UINamespaceExample_Popup.html';
+    var popupUrl = 'https://jz-huang.github.io/UINamespaceExample_Popup.html';
     tableau.extensions.initializeAsync({'configure': configure, 'configure': configure}).then(function() {
       tableau.extensions.settings.addEventListener(tableau.TableauEventType.SettingsChanged, function (settingsEvent){
         console.log("settings have been updated: " + JSON.stringify(settingsEvent.newSettings));
